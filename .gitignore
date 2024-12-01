@@ -1,15 +1,42 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+# Ignore Gradle files
+.gradle/
 local.properties
+/captures
+.externalNativeBuild/
+
+# Ignore IntelliJ IDEA/Android Studio project files
+*.iml
+.idea/
+/.idea/caches/
+/.idea/libraries/
+/.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+
+# Ignore build files
+/build/
+.cxx/
+
+# macOS-specific files
+.DS_Store
+
+# Ignore dependency cache (optional)
+.gradle/
+**/build/
+
+# Ignore misc
+*.log
+*.bak
+*.swp
+*.tmp
+
+# Ignore generated Firebase config files
+google-services.json
+
+# Ignore Android local test result files
+/test-results/
+
+# Ignore other sensitive files (add as necessary)
+.env
+key.properties
