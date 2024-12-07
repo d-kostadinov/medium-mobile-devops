@@ -84,6 +84,8 @@ jobs:
       - script: |
           ./gradlew assembleDevDebug
         displayName: Build APK
+        env:
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
       # Step 9: Upload the APK to Firebase
       - script: |
