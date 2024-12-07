@@ -86,7 +86,7 @@ jobs:
           secureFile: medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json
 
       - script: |
-          mv $(Agent.TempDirectory)/medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json $(System.DefaultWorkingDirectory)/medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json
+          mv $(Agent.TempDirectory)/firebase-service-account.json $(System.DefaultWorkingDirectory)/medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json
         displayName: Move Firebase Admin SDK JSON to Working Directory
 
       # Step 8: Build the APK
