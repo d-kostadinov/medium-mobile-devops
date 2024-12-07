@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    alias(libs.plugins.firebaseDistribution)
 }
 
 android {
@@ -94,4 +95,10 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+// Firebase App Distribution Configuration
+firebaseAppDistribution {
+    serviceCredentialsFile = "firebase-service-account.json"
+    groups = "testers-group" // Replace with your tester group(s)
 }
