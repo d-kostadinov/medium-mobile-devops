@@ -2,7 +2,7 @@ trigger:
   - main
 
 variables:
-  - group: group1 # Link the variable group
+  - group: group1 # Link the variable group containing secrets
   - name: buildVariant
     value: 'dev'
   - name: firebaseServiceFile
@@ -28,9 +28,7 @@ steps:
     env:
       AZURE_PAT: $(AZURE_PAT)
 
-
-
-  # Step 2: Install Java 17
+  # Step 3: Install Java 17
   - script: |
       sudo apt update
       sudo apt install -y openjdk-17-jdk
@@ -38,22 +36,21 @@ steps:
       java -version
     displayName: 'Install and Set Java 17'
 
-  # Step 3: Set JAVA_HOME
+  # Step 4: Set JAVA_HOME
   - script: |
       echo "Setting JAVA_HOME..."
       export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
       echo "JAVA_HOME is set to $JAVA_HOME"
     displayName: 'Set JAVA_HOME for Java 17'
 
-  # Step 4: Verify JAVA_HOME
+  # Step 5: Verify JAVA_HOME
   - script: |
       echo "Verifying JAVA_HOME..."
       echo $JAVA_HOME
       java -version
     displayName: 'Verify JAVA_HOME'
 
-  # Step 5: Download secure files
-  # 1. Google Services JSON
+  # Step 6: Download secure files
   - task: DownloadSecureFile@1
     inputs:
       secureFile: 'google-services-$(buildVariant).json'
@@ -62,7 +59,7 @@ steps:
       mv $(Agent.TempDirectory)/google-services-$(buildVariant).json app/google-services.json
     displayName: 'Inject google-services.json'
 
-  # 2. Firebase Service Account JSON
+  # Step 7. Firebase Service Account JSON
   - task: DownloadSecureFile@1
     inputs:
       secureFile: '$(firebaseServiceFile)'
@@ -71,22 +68,31 @@ steps:
       mv $(Agent.TempDirectory)/$(firebaseServiceFile) ./firebase-service-account.json
     displayName: 'Inject Firebase Service Account JSON'
 
-  # Step 6: Build the app
+  # Step 8: Build the app
   - script: |
       ./gradlew clean bundle${{ variables.buildVariant }}
     displayName: 'Build the App'
     env:
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
-  # Step 7: Verify build output directory
+  # Step 9: Verify build output directory
   - script: |
       echo "Listing contents of build directory:"
       ls -R app/build/outputs
     displayName: 'Verify Build Output Directory'
 
-  # Step 8: Distribute to Firebase App Distribution
+  # Step 10: Distribute to Firebase App Distribution
   - script: |
-      TASK_NAME="appDistributionUpload${buildVariant^}Debug"
+      if [ "$buildVariant" == "dev" ]; then
+        TASK_NAME="appDistributionUploadDevDebug"
+      elif [ "$buildVariant" == "qa" ]; then
+        TASK_NAME="appDistributionUploadQaDebug"
+      elif [ "$buildVariant" == "prod" ]; then
+        TASK_NAME="appDistributionUploadProdDebug"
+      else
+        echo "Unknown buildVariant: $buildVariant"
+        exit 1
+      fi
       echo "Running task: $TASK_NAME"
       ./gradlew $TASK_NAME -PfirebaseServiceCredentialsFile=firebase-service-account.json
     displayName: 'Distribute to Firebase'
