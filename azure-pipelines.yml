@@ -1,63 +1,66 @@
 trigger:
   - main
 
-parameters:
-  - name: buildVariant
-    displayName: 'Build Variant'
-    type: string
-    default: 'dev'
-    values:
-      - dev
-      - prod
-      - qa
-
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  buildVariant: ${{ parameters.buildVariant }}
+  - group: group1 # Link the variable group
+  - name: buildVariant
+    value: 'dev' # Specify the build variant ('dev', 'qa', or 'prod')
 
 stages:
   - stage: BuildAndDistribute
     displayName: 'Build and Distribute APK'
     jobs:
       - job: BuildAndUpload
-        displayName: 'Build APK and Upload to Firebase'
+        displayName: 'Build and Upload APK to Firebase'
         steps:
-          # Step 1: Dynamically download the correct google-services.json file
+          - script: |
+              echo "Determining the google-services.json file for build variant: $(buildVariant)"
+              if [[ "$(buildVariant)" == "dev" ]]; then
+                echo "google-services-dev.json" > google_services_file.txt
+              elif [[ "$(buildVariant)" == "qa" ]]; then
+                echo "google-services-qa.json" > google_services_file.txt
+              elif [[ "$(buildVariant)" == "prod" ]]; then
+                echo "google-services-prod.json" > google_services_file.txt
+              else
+                echo "google-services-dev.json" > google_services_file.txt
+              fi
+              cat google_services_file.txt
+            displayName: 'Determine google-services.json File'
+
           - task: DownloadSecureFile@1
-            displayName: 'Download google-services.json for $(buildVariant)'
+            displayName: 'Download google-services.json'
             inputs:
-              secureFile: ${{
-                if eq(variables['buildVariant'], 'dev') }} 'google-services-dev.json' {{
-                if eq(variables['buildVariant'], 'prod') }} 'google-services-prod.json' {{
-                if eq(variables['buildVariant'], 'qa') }} 'google-services-qa.json' {{}}
+              secureFile: ${{ variables['google_services_file.txt'] }}
 
-          # Step 2: Inject the correct google-services.json file
           - script: |
-              echo "Using google-services.json for buildVariant: $(buildVariant)"
-              mv "$(Agent.TempDirectory)/google-services-$(buildVariant).json" ./app/google-services.json
-            displayName: 'Inject google-services.json'
+              echo "Moving google-services.json to the app directory"
+              mv $(Agent.TempDirectory)/google-services.json app/google-services.json
+            displayName: 'Move google-services.json to app directory'
 
-          # Step 3: Install and set up Java 17
-          - script: |
-              sudo apt-get update
-              sudo apt-get install -y openjdk-17-jdk
-              echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> $GITHUB_ENV
-              java -version
-            displayName: 'Install and Configure Java 17'
+          - task: DownloadSecureFile@1
+            displayName: 'Download Firebase Service Account'
+            inputs:
+              secureFile: medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json
 
-          # Step 4: Build the APK
           - script: |
-              echo "Building APK for $(buildVariant)..."
-              ./gradlew assemble${{ variables.buildVariant | capitalize }}Debug
-            displayName: 'Build APK for $(buildVariant)'
+              echo "Moving Firebase service account JSON to the app directory"
+              mv $(Agent.TempDirectory)/medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json app/firebase-service-account.json
+            displayName: 'Inject Firebase Service Account JSON'
 
-          # Step 5: Upload APK to Firebase
           - script: |
-              APK_PATH="./app/build/outputs/apk/$(buildVariant)/debug/app-$(buildVariant)-debug.apk"
-              echo "Uploading APK: $APK_PATH"
-              ./gradlew appDistributionUpload${{ variables.buildVariant | capitalize }}Debug \
-                -PfirebaseAppId="YOUR_FIREBASE_APP_ID" \
-                -PserviceAccountFile="./app/google-services.json"
-            displayName: 'Upload APK to Firebase'
+              echo "Building APK for $(buildVariant) variant"
+              ./gradlew clean assemble$(buildVariant.capitalize())Debug
+            displayName: 'Build APK'
+
+          - script: |
+              echo "Distributing APK to Firebase App Distribution"
+              ./gradlew appDistributionUpload$(buildVariant.capitalize())Debug
+            displayName: 'Distribute APK to Firebase'
+
+          - script: |
+              echo "Listing APK outputs"
+              ls -la app/build/outputs/apk/$(buildVariant)/debug/
+            displayName: 'Verify APK Output'
