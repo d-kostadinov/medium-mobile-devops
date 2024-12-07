@@ -83,18 +83,24 @@ steps:
 
   # Step 10: Distribute to Firebase App Distribution
   - script: |
-      if [ "$buildVariant" == "dev" ]; then
-        TASK_NAME="appDistributionUploadDevDebug"
-      elif [ "$buildVariant" == "qa" ]; then
-        TASK_NAME="appDistributionUploadQaDebug"
-      elif [ "$buildVariant" == "prod" ]; then
-        TASK_NAME="appDistributionUploadProdDebug"
-      else
-        echo "Unknown buildVariant: $buildVariant"
-        exit 1
-      fi
+      case "$buildVariant" in
+        dev)
+          TASK_NAME="appDistributionUploadDevDebug"
+          ;;
+        qa)
+          TASK_NAME="appDistributionUploadQaDebug"
+          ;;
+        prod)
+          TASK_NAME="appDistributionUploadProdDebug"
+          ;;
+        *)
+          echo "Unknown buildVariant: $buildVariant"
+          exit 1
+          ;;
+      esac
       echo "Running task: $TASK_NAME"
       ./gradlew $TASK_NAME -PfirebaseServiceCredentialsFile=firebase-service-account.json
     displayName: 'Distribute to Firebase'
     env:
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+      buildVariant: $(buildVariant) # Ensure the variable is passed correctly
