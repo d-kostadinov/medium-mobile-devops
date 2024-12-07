@@ -1,47 +1,48 @@
 trigger:
   - main
 
+pool:
+  vmImage: 'ubuntu-latest'
+
 variables:
-  - name: buildVariant
-    value: 'dev' # Set to 'dev', 'qa', or 'prod'
+  buildVariant: dev # Set your build variant (e.g., dev, prod, qa)
+  buildVariantCapitalized: Dev # Capitalized version of the build variant for Gradle tasks
 
-jobs:
-  - job: BuildAndUpload
-    displayName: Build and Upload APK to Firebase
-    pool:
-      vmImage: 'ubuntu-latest'
+steps:
+  # Set up Java 17 manually
+  - script: |
+      sudo apt-get update
+      sudo apt-get install -y openjdk-17-jdk
+      java -version
+    displayName: Set up Java 17
 
-    steps:
-      # Download the correct google-services.json file
-      - task: DownloadSecureFile@1
-        displayName: Download google-services-dev.json
-        condition: eq(variables['buildVariant'], 'dev')
-        inputs:
-          secureFile: google-services-dev.json
+  # Checkout the repository
+  - task: Checkout@1
+    displayName: Checkout source code
 
-      - task: DownloadSecureFile@1
-        displayName: Download google-services-qa.json
-        condition: eq(variables['buildVariant'], 'qa')
-        inputs:
-          secureFile: google-services-qa.json
+  # Download the correct google-services.json file based on the build variant
+  - task: DownloadSecureFile@1
+    name: DownloadGoogleServices
+    displayName: Download google-services.json
+    inputs:
+      secureFile: google-services-$(buildVariant).json
 
-      - task: DownloadSecureFile@1
-        displayName: Download google-services-prod.json
-        condition: eq(variables['buildVariant'], 'prod')
-        inputs:
-          secureFile: google-services-prod.json
+  # Move the downloaded google-services.json to the app directory
+  - script: |
+      mv $(Agent.TempDirectory)/google-services-*.json $(System.DefaultWorkingDirectory)/app/google-services.json
+    displayName: Move google-services.json to app directory
 
-      # Move the file to the correct location
-      - script: |
-          mv $(Agent.TempDirectory)/google-services-*.json $(System.DefaultWorkingDirectory)/app/google-services.json
-        displayName: Move google-services.json to app directory
+  # Install dependencies
+  - script: |
+      ./gradlew dependencies
+    displayName: Install dependencies
 
-      # Build the APK
-      - script: |
-          ./gradlew assemble$(buildVariant | capitalize)Debug
-        displayName: Build APK
+  # Build the APK for the specified variant
+  - script: |
+      ./gradlew assemble$(buildVariantCapitalized)Debug
+    displayName: Build APK
 
-      # Upload the APK to Firebase
-      - script: |
-          ./gradlew appDistributionUpload$(buildVariant | capitalize)Debug
-        displayName: Upload APK to Firebase
+  # Upload the APK to Firebase
+  - script: |
+      ./gradlew appDistributionUpload$(buildVariantCapitalized)Debug
+    displayName: Upload APK to Firebase
