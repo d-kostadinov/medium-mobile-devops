@@ -108,3 +108,4 @@ jobs:
         displayName: Upload APK to Firebase
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+          GOOGLE_APPLICATION_CREDENTIALS: $(System.DefaultWorkingDirectory)/firebase-service-account.json
