@@ -4,7 +4,7 @@ trigger:
 variables:
   - group: group1 # Link the variable group containing secrets
   - name: buildVariant
-    value: 'dev'
+    value: 'dev' # Default value for the build variant
   - name: firebaseServiceFile
     value: 'medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json'
 
@@ -51,6 +51,7 @@ steps:
     displayName: 'Verify JAVA_HOME'
 
   # Step 6: Download secure files
+  # 1. Google Services JSON
   - task: DownloadSecureFile@1
     inputs:
       secureFile: 'google-services-$(buildVariant).json'
@@ -59,7 +60,7 @@ steps:
       mv $(Agent.TempDirectory)/google-services-$(buildVariant).json app/google-services.json
     displayName: 'Inject google-services.json'
 
-  # Step 7. Firebase Service Account JSON
+  # 2. Firebase Service Account JSON
   - task: DownloadSecureFile@1
     inputs:
       secureFile: '$(firebaseServiceFile)'
@@ -68,20 +69,20 @@ steps:
       mv $(Agent.TempDirectory)/$(firebaseServiceFile) ./firebase-service-account.json
     displayName: 'Inject Firebase Service Account JSON'
 
-  # Step 8: Build the app
+  # Step 7: Build the app
   - script: |
       ./gradlew clean bundle${{ variables.buildVariant }}
     displayName: 'Build the App'
     env:
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
-  # Step 9: Verify build output directory
+  # Step 8: Verify build output directory
   - script: |
       echo "Listing contents of build directory:"
       ls -R app/build/outputs
     displayName: 'Verify Build Output Directory'
 
-  # Step 10: Distribute to Firebase App Distribution
+  # Step 9: Distribute to Firebase App Distribution
   - script: |
       case "$buildVariant" in
         dev)
