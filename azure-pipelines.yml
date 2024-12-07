@@ -2,9 +2,9 @@ trigger:
   - main
 
 variables:
-  - group: group1 # Link the variable group containing secrets
+  - group: group1 # Link the variable group
   - name: buildVariant
-    value: 'dev' # Default value for the build variant
+    value: 'dev'
   - name: firebaseServiceFile
     value: 'medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json'
 
@@ -43,24 +43,7 @@ steps:
       echo "JAVA_HOME is set to $JAVA_HOME"
     displayName: 'Set JAVA_HOME for Java 17'
 
-  # Step 5: Verify JAVA_HOME
-  - script: |
-      echo "Verifying JAVA_HOME..."
-      echo $JAVA_HOME
-      java -version
-    displayName: 'Verify JAVA_HOME'
-
-  # Step 6: Download secure files
-  # 1. Google Services JSON
-  - task: DownloadSecureFile@1
-    inputs:
-      secureFile: 'google-services-$(buildVariant).json'
-  - script: |
-      echo "Moving google-services.json..."
-      mv $(Agent.TempDirectory)/google-services-$(buildVariant).json app/google-services.json
-    displayName: 'Inject google-services.json'
-
-  # 2. Firebase Service Account JSON
+  # Step 5: Download secure files
   - task: DownloadSecureFile@1
     inputs:
       secureFile: '$(firebaseServiceFile)'
@@ -69,39 +52,24 @@ steps:
       mv $(Agent.TempDirectory)/$(firebaseServiceFile) ./firebase-service-account.json
     displayName: 'Inject Firebase Service Account JSON'
 
-  # Step 7: Build the app
+  # Step 6: Build APK
   - script: |
-      ./gradlew clean bundle${{ variables.buildVariant }}
-    displayName: 'Build the App'
+      ./gradlew clean assemble${{ variables.buildVariant.capitalize() }}Debug
+    displayName: 'Build APK'
     env:
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
-  # Step 8: Verify build output directory
+  # Step 7: Verify build output directory
   - script: |
       echo "Listing contents of build directory:"
       ls -R app/build/outputs
     displayName: 'Verify Build Output Directory'
 
-  # Step 9: Distribute to Firebase App Distribution
+  # Step 8: Distribute to Firebase App Distribution
   - script: |
-      case "$buildVariant" in
-        dev)
-          TASK_NAME="appDistributionUploadDevDebug"
-          ;;
-        qa)
-          TASK_NAME="appDistributionUploadQaDebug"
-          ;;
-        prod)
-          TASK_NAME="appDistributionUploadProdDebug"
-          ;;
-        *)
-          echo "Unknown buildVariant: $buildVariant"
-          exit 1
-          ;;
-      esac
-      echo "Running task: $TASK_NAME"
-      ./gradlew $TASK_NAME -PfirebaseServiceCredentialsFile=firebase-service-account.json
-    displayName: 'Distribute to Firebase'
+      APK_PATH="app/build/outputs/apk/${{ variables.buildVariant }}/debug/app-${{ variables.buildVariant }}-debug.apk"
+      echo "Uploading APK: $APK_PATH"
+      ./gradlew appDistributionUpload${{ variables.buildVariant.capitalize() }}Debug -PfirebaseServiceCredentialsFile=firebase-service-account.json -PdistributeApkPath=$APK_PATH
+    displayName: 'Distribute APK to Firebase'
     env:
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
-      buildVariant: $(buildVariant) # Ensure the variable is passed correctly
