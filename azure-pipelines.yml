@@ -2,8 +2,11 @@ trigger:
   - main
 
 variables:
-  buildVariant: 'dev'
-  firebaseServiceFile: 'medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json'
+  - group: group1 # Link the variable group
+  - name: buildVariant
+    value: 'dev'
+  - name: firebaseServiceFile
+    value: 'medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json'
 
 pool:
   vmImage: 'ubuntu-22.04'
@@ -14,15 +17,18 @@ steps:
     inputs:
       repository: self
 
-  # Step 2: Sync from GitHub
+  # Step 2: Sync with GitHub (Force Override)
   - script: |
       git remote add github https://github.com/d-kostadinov/medium-mobile-devops.git
       git fetch github
-      git config user.name "Azure DevOps CI"
-      git config user.email "ci@azuredevops.com"
-      git merge github/main --allow-unrelated-histories # Allow merging unrelated histories
-      git push origin main
-    displayName: 'Sync with GitHub'
+      git checkout -b main || git checkout main # Create or switch to main branch
+      git reset --hard github/main # Force reset to GitHub's main branch
+      git push https://devdobrikostadinov:${AZURE_PAT}@dev.azure.com/devdobrikostadinov/medium.devops/_git/medium-mobile-devops.git --force
+    displayName: 'Sync with GitHub (Force Override)'
+    env:
+      AZURE_PAT: $(AZURE_PAT)
+
+
 
   # Step 2: Install Java 17
   - script: |
