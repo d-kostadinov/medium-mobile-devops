@@ -1,3 +1,6 @@
+ot chat gpt last one:
+
+
 trigger:
   - main
 
@@ -5,10 +8,16 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  buildVariant: dev # Set your build variant (e.g., dev, prod, qa)
-  buildVariantCapitalized: Dev # Capitalized version of the build variant for Gradle tasks
+  buildVariant: 'dev' # Set your build variant
+  buildVariantCapitalized: 'Dev' # Capitalized version of the build variant for Gradle tasks
 
 steps:
+  # Debugging step to print variables
+  - script: |
+      echo "Build Variant: $(buildVariant)"
+      echo "Capitalized Build Variant: $(buildVariantCapitalized)"
+    displayName: Print Variables
+
   # Set up Java 17 manually
   - script: |
       sudo apt-get update
@@ -20,29 +29,24 @@ steps:
   - task: Checkout@1
     displayName: Checkout source code
 
-  # Download the correct google-services.json file based on the build variant
+  # Download the correct google-services.json file
   - task: DownloadSecureFile@1
     name: DownloadGoogleServices
     displayName: Download google-services.json
     inputs:
       secureFile: google-services-$(buildVariant).json
 
-  # Move the downloaded google-services.json to the app directory
+  # Move google-services.json to app directory
   - script: |
       mv $(Agent.TempDirectory)/google-services-*.json $(System.DefaultWorkingDirectory)/app/google-services.json
     displayName: Move google-services.json to app directory
 
-  # Install dependencies
-  - script: |
-      ./gradlew dependencies
-    displayName: Install dependencies
-
-  # Build the APK for the specified variant
+  # Build APK
   - script: |
       ./gradlew assemble$(buildVariantCapitalized)Debug
     displayName: Build APK
 
-  # Upload the APK to Firebase
+  # Upload APK to Firebase
   - script: |
       ./gradlew appDistributionUpload$(buildVariantCapitalized)Debug
     displayName: Upload APK to Firebase
