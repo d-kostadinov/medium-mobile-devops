@@ -89,6 +89,12 @@ jobs:
           mv $(Agent.TempDirectory)/firebase-service-account.json $(System.DefaultWorkingDirectory)/firebase-service-account.json
         displayName: Move Firebase Admin SDK JSON to Working Directory
 
+      # Debugging: Verify google-services.json placement
+      - script: |
+          echo "Listing files in app directory:"
+          ls $(System.DefaultWorkingDirectory)/app
+        displayName: Verify google-services.json Placement
+
       # Step 8: Build the APK
       - script: |
           ./gradlew assembleDevDebug
