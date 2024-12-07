@@ -4,7 +4,9 @@ trigger:
 variables:
   - group: group1 # Link the variable group
   - name: buildVariant
-    value: 'dev'
+    value: 'dev' # Use your specific build variant here
+  - name: buildVariantCapitalized
+    value: 'Dev' # Manually capitalize for consistency
   - name: firebaseServiceFile
     value: 'medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json'
 
@@ -54,7 +56,7 @@ steps:
 
   # Step 6: Build APK
   - script: |
-      ./gradlew clean assemble${{ variables.buildVariant.capitalize() }}Debug
+      ./gradlew clean assemble$(buildVariantCapitalized)Debug
     displayName: 'Build APK'
     env:
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
@@ -67,9 +69,9 @@ steps:
 
   # Step 8: Distribute to Firebase App Distribution
   - script: |
-      APK_PATH="app/build/outputs/apk/${{ variables.buildVariant }}/debug/app-${{ variables.buildVariant }}-debug.apk"
+      APK_PATH="app/build/outputs/apk/$(buildVariant)/debug/app-$(buildVariant)-debug.apk"
       echo "Uploading APK: $APK_PATH"
-      ./gradlew appDistributionUpload${{ variables.buildVariant.capitalize() }}Debug -PfirebaseServiceCredentialsFile=firebase-service-account.json -PdistributeApkPath=$APK_PATH
+      ./gradlew appDistributionUpload$(buildVariantCapitalized)Debug -PfirebaseServiceCredentialsFile=firebase-service-account.json -PdistributeApkPath=$APK_PATH
     displayName: 'Distribute APK to Firebase'
     env:
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
