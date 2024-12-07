@@ -1,52 +1,91 @@
-ot chat gpt last one:
-
-
 trigger:
   - main
 
-pool:
-  vmImage: 'ubuntu-latest'
-
 variables:
-  buildVariant: 'dev' # Set your build variant
-  buildVariantCapitalized: 'Dev' # Capitalized version of the build variant for Gradle tasks
+  - group: group1 # Link the variable group
+  - name: buildVariant
+    value: 'dev' # Use your specific build variant here
+  - name: buildVariantCapitalized
+    value: 'Dev' # Manually capitalize for consistency
+  - name: firebaseServiceFile
+    value: 'medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json'
 
-steps:
-  # Debugging step to print variables
-  - script: |
-      echo "Build Variant: $(buildVariant)"
-      echo "Capitalized Build Variant: $(buildVariantCapitalized)"
-    displayName: Print Variables
+jobs:
+  - job: BuildAndUpload
+    displayName: Build and Upload APK to Firebase
+    pool:
+      vmImage: 'ubuntu-22.04'
 
-  # Set up Java 17 manually
-  - script: |
-      sudo apt-get update
-      sudo apt-get install -y openjdk-17-jdk
-      java -version
-    displayName: Set up Java 17
+    steps:
 
-  # Checkout the repository
-  - task: Checkout@1
-    displayName: Checkout source code
+      # Step 1: Explicit checkout configuration
+      - task: Checkout@1
+        inputs:
+          repository: self
 
-  # Download the correct google-services.json file
-  - task: DownloadSecureFile@1
-    name: DownloadGoogleServices
-    displayName: Download google-services.json
-    inputs:
-      secureFile: google-services-$(buildVariant).json
+      # Step 2: Sync with GitHub (Force Override)
+      - script: |
+          git remote add github https://github.com/d-kostadinov/medium-mobile-devops.git
+          git fetch github
+          git checkout -b main || git checkout main # Create or switch to main branch
+          git reset --hard github/main # Force reset to GitHub's main branch
+          git push https://devdobrikostadinov:${AZURE_PAT}@dev.azure.com/devdobrikostadinov/medium.devops/_git/medium-mobile-devops.git --force
+        displayName: 'Sync with GitHub (Force Override)'
+        env:
+          AZURE_PAT: $(AZURE_PAT)
 
-  # Move google-services.json to app directory
-  - script: |
-      mv $(Agent.TempDirectory)/google-services-*.json $(System.DefaultWorkingDirectory)/app/google-services.json
-    displayName: Move google-services.json to app directory
+      # Step 3: Install Java 17
+      - script: |
+          sudo apt update
+          sudo apt install -y openjdk-17-jdk
+          sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+          java -version
+        displayName: 'Install and Set Java 17'
 
-  # Build APK
-  - script: |
-      ./gradlew assemble$(buildVariantCapitalized)Debug
-    displayName: Build APK
+      # Step 4: Set JAVA_HOME
+      - script: |
+          echo "Setting JAVA_HOME..."
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          echo "JAVA_HOME is set to $JAVA_HOME"
+        displayName: 'Set JAVA_HOME for Java 17'
 
-  # Upload APK to Firebase
-  - script: |
-      ./gradlew appDistributionUpload$(buildVariantCapitalized)Debug
-    displayName: Upload APK to Firebase
+      # Step 5: Verify JAVA_HOME
+      - script: |
+          echo "Verifying JAVA_HOME..."
+          echo $JAVA_HOME
+          java -version
+        displayName: 'Verify JAVA_HOME'
+
+      # Step 6: Download the correct google-services.json file
+      - task: DownloadSecureFile@1
+        displayName: Download google-services-dev.json
+        condition: eq(variables['buildVariant'], 'dev')
+        inputs:
+          secureFile: google-services-dev.json
+
+      - task: DownloadSecureFile@1
+        displayName: Download google-services-qa.json
+        condition: eq(variables['buildVariant'], 'qa')
+        inputs:
+          secureFile: google-services-qa.json
+
+      - task: DownloadSecureFile@1
+        displayName: Download google-services-prod.json
+        condition: eq(variables['buildVariant'], 'prod')
+        inputs:
+          secureFile: google-services-prod.json
+
+      # Step 7: Move the file to the correct location
+      - script: |
+          mv $(Agent.TempDirectory)/google-services-*.json $(System.DefaultWorkingDirectory)/app/google-services.json
+        displayName: Move google-services.json to app directory
+
+      # Step 8: Build the APK
+      - script: |
+          ./gradlew assembleDevDebug
+        displayName: Build APK
+
+      # Step 9: Upload the APK to Firebase
+      - script: |
+          ./gradlew appDistributionUploadDevDebug
+        displayName: Upload APK to Firebase
