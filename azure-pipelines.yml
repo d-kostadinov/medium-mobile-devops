@@ -1,52 +1,47 @@
 trigger:
   - main
 
-pool:
-  vmImage: 'ubuntu-latest'
-
 variables:
   - name: buildVariant
-    value: 'dev' # Change to 'prod' or 'qa' as needed
-  - name: buildVariantCapitalized
-    value: 'Dev' # Manually capitalize to match Gradle tasks
+    value: 'dev' # Set to 'dev', 'qa', or 'prod'
 
 jobs:
   - job: BuildAndUpload
     displayName: Build and Upload APK to Firebase
-    steps:
-      - checkout: self
+    pool:
+      vmImage: 'ubuntu-latest'
 
+    steps:
+      # Download the correct google-services.json file
       - task: DownloadSecureFile@1
-        displayName: Download google-services.json for Dev
+        displayName: Download google-services-dev.json
         condition: eq(variables['buildVariant'], 'dev')
         inputs:
-          secureFile: 'google-services-dev.json'
+          secureFile: google-services-dev.json
 
       - task: DownloadSecureFile@1
-        displayName: Download google-services.json for Prod
-        condition: eq(variables['buildVariant'], 'prod')
-        inputs:
-          secureFile: 'google-services-prod.json'
-
-      - task: DownloadSecureFile@1
-        displayName: Download google-services.json for QA
+        displayName: Download google-services-qa.json
         condition: eq(variables['buildVariant'], 'qa')
         inputs:
-          secureFile: 'google-services-qa.json'
+          secureFile: google-services-qa.json
 
+      - task: DownloadSecureFile@1
+        displayName: Download google-services-prod.json
+        condition: eq(variables['buildVariant'], 'prod')
+        inputs:
+          secureFile: google-services-prod.json
+
+      # Move the file to the correct location
       - script: |
-          mv $(Agent.TempDirectory)/google-services.json $(System.DefaultWorkingDirectory)/app/google-services.json
+          mv $(Agent.TempDirectory)/google-services-*.json $(System.DefaultWorkingDirectory)/app/google-services.json
         displayName: Move google-services.json to app directory
 
-      - task: UsePythonVersion@0
-        inputs:
-          versionSpec: '3.x'
-          addToPath: true
-
+      # Build the APK
       - script: |
-          ./gradlew assemble$(buildVariantCapitalized)Debug
+          ./gradlew assemble$(buildVariant | capitalize)Debug
         displayName: Build APK
 
+      # Upload the APK to Firebase
       - script: |
-          ./gradlew appDistributionUpload$(buildVariantCapitalized)Debug
+          ./gradlew appDistributionUpload$(buildVariant | capitalize)Debug
         displayName: Upload APK to Firebase
