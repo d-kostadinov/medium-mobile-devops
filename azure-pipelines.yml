@@ -80,6 +80,15 @@ jobs:
           mv $(Agent.TempDirectory)/google-services-*.json $(System.DefaultWorkingDirectory)/app/google-services.json
         displayName: Move google-services.json to app directory
 
+      - task: DownloadSecureFile@1
+        displayName: Download Firebase Admin SDK JSON
+        inputs:
+          secureFile: medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json
+
+      - script: |
+          mv $(Agent.TempDirectory)/medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json $(System.DefaultWorkingDirectory)/medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json
+        displayName: Move Firebase Admin SDK JSON to Working Directory
+
       # Step 8: Build the APK
       - script: |
           ./gradlew assembleDevDebug
