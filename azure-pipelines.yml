@@ -8,7 +8,7 @@ variables:
   - name: buildVariantCapitalized
     value: 'Dev' # Manually capitalize for consistency
   - name: firebaseServiceFile
-    value: 'medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json'
+    value: 'firebase-service-account.json'
 
 jobs:
   - job: BuildAndUpload
@@ -83,10 +83,10 @@ jobs:
       - task: DownloadSecureFile@1
         displayName: Download Firebase Admin SDK JSON
         inputs:
-          secureFile: medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json
+          secureFile: firebase-service-account.json
 
       - script: |
-          mv $(Agent.TempDirectory)/firebase-service-account.json $(System.DefaultWorkingDirectory)/medium-devops-01-firebase-adminsdk-ibr0u-6a85363e42.json
+          mv $(Agent.TempDirectory)/firebase-service-account.json $(System.DefaultWorkingDirectory)/firebase-service-account.json
         displayName: Move Firebase Admin SDK JSON to Working Directory
 
       # Step 8: Build the APK
