@@ -30,8 +30,10 @@ jobs:
           echo "PATH: $PATH"
         displayName: Verify sdkmanager Availability
 
-      # Step 9: Install Android SDK Build Tools
+      # Step: Install Android SDK Build Tools
       - script: |
+          export PATH=$PATH:/usr/local/lib/android/sdk/cmdline-tools/latest/bin
+          echo "Updated PATH: $PATH"
           yes | sdkmanager --install "build-tools;34.0.0"
         displayName: Install Android SDK Build Tools
 
