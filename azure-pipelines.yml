@@ -30,6 +30,16 @@ jobs:
           echo "PATH: $PATH"
         displayName: Verify sdkmanager Availability
 
+      # Step 9: Install Android SDK Build Tools
+      - script: |
+          yes | sdkmanager --install "build-tools;34.0.0"
+        displayName: Install Android SDK Build Tools
+
+      # Step 10: Add Build Tools to PATH
+      - script: |
+          export PATH=$PATH:$ANDROID_HOME/build-tools/34.0.0
+        displayName: Add Build Tools to PATH
+
       # Step 1: Explicit checkout configuration
       - task: Checkout@1
         inputs:
@@ -116,16 +126,6 @@ jobs:
         displayName: Build APK
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
-
-      # Step 9: Install Android SDK Build Tools
-      - script: |
-          yes | sdkmanager --install "build-tools;34.0.0"
-        displayName: Install Android SDK Build Tools
-
-      # Step 10: Add Build Tools to PATH
-      - script: |
-          export PATH=$PATH:$ANDROID_HOME/build-tools/34.0.0
-        displayName: Add Build Tools to PATH
 
       # Step 11: Verify APK Application ID
       - script: |
