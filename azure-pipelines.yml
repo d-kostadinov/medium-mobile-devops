@@ -105,7 +105,17 @@ jobs:
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
-      # Step 9: Verify APK's Application ID
+      # Step 9: Install Android SDK Build Tools
+      - script: |
+          yes | sdkmanager --install "build-tools;34.0.0"
+        displayName: Install Android SDK Build Tools
+
+      # Step 10: Add Build Tools to PATH
+      - script: |
+          export PATH=$PATH:$ANDROID_HOME/build-tools/34.0.0
+        displayName: Add Build Tools to PATH
+
+      # Step 11: Verify APK Application ID
       - script: |
           echo "Verifying applicationId in the APK..."
           aapt dump badging app/build/outputs/apk/dev/debug/app-dev-debug.apk | grep package
