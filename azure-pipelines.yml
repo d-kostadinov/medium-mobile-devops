@@ -105,6 +105,12 @@ jobs:
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
+      # Step 9: Verify APK's Application ID
+      - script: |
+          echo "Verifying applicationId in the APK..."
+          aapt dump badging app/build/outputs/apk/dev/debug/app-dev-debug.apk | grep package
+        displayName: Verify APK Application ID
+
       # Step 9: Upload the APK to Firebase
       - script: |
           ./gradlew appDistributionUploadDevDebug
