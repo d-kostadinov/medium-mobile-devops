@@ -144,6 +144,12 @@ jobs:
 
       # Step 11: Verify APK Application ID
       - script: |
+          echo "Adding aapt to PATH..."
+          export PATH=$PATH:/usr/local/lib/android/sdk/build-tools/34.0.0
+
+          echo "Testing aapt availability..."
+          which aapt || { echo "aapt not found in PATH"; exit 1; }
+
           echo "Verifying applicationId in the APK..."
           aapt dump badging app/build/outputs/apk/dev/debug/app-dev-debug.apk | grep package
         displayName: Verify APK Application ID
