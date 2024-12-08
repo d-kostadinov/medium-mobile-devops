@@ -85,9 +85,10 @@ jobs:
         inputs:
           secureFile: firebase-service-account.json
 
+      # Step: Copy the service account key to the working directory
       - script: |
-          mv $(Agent.TempDirectory)/firebase-service-account.json $(System.DefaultWorkingDirectory)/firebase-service-account.json
-        displayName: Move Firebase Admin SDK JSON to Working Directory
+          cp $(Agent.TempDirectory)/firebase-service-account.json $(System.DefaultWorkingDirectory)/firebase-service-account.json
+        displayName: 'Copy Firebase service account key to the working directory'
 
       # Debugging: Verify google-services.json placement
       - script: |
