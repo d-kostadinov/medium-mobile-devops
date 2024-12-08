@@ -24,6 +24,12 @@ jobs:
           ls $ANDROID_HOME
         displayName: Check ANDROID_HOME Environment Variable
 
+      # Step: Verify sdkmanager Availability
+      - script: |
+          ls /usr/local/lib/android/sdk/cmdline-tools/latest/bin
+          echo "PATH: $PATH"
+        displayName: Verify sdkmanager Availability
+
       # Step 1: Explicit checkout configuration
       - task: Checkout@1
         inputs:
