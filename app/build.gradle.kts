@@ -23,7 +23,6 @@ android {
 
     buildTypes {
         debug {
-            applicationIdSuffix = ".debug"
         }
 
         release {
