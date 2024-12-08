@@ -90,11 +90,13 @@ jobs:
           cp $(Agent.TempDirectory)/firebase-service-account.json $(System.DefaultWorkingDirectory)/firebase-service-account.json
         displayName: 'Copy Firebase service account key to the working directory'
 
-      # Debugging: Verify google-services.json placement
+      # Debugging: Verify google-services.json placement and content
       - script: |
           echo "Listing files in app directory:"
           ls $(System.DefaultWorkingDirectory)/app
-        displayName: Verify google-services.json Placement
+          echo "Content of google-services.json:"
+          cat $(System.DefaultWorkingDirectory)/app/google-services.json
+        displayName: Verify google-services.json Placement and Content
 
       # Step 8: Build the APK
       - script: |
