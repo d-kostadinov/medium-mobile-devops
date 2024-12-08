@@ -42,6 +42,19 @@ jobs:
           export PATH=$PATH:$ANDROID_HOME/build-tools/34.0.0
         displayName: Add Build Tools to PATH
 
+      # Step: Verify aapt Binary Location
+      - script: |
+          echo "Listing files in build-tools/34.0.0 directory:"
+          ls -la $ANDROID_HOME/build-tools/34.0.0
+        displayName: Verify aapt Binary Location
+
+      # Step: Add aapt to PATH
+      - script: |
+          export PATH=$PATH:$ANDROID_HOME/build-tools/34.0.0
+          echo "Updated PATH: $PATH"
+          which aapt
+        displayName: Add aapt to PATH
+
       # Step 1: Explicit checkout configuration
       - task: Checkout@1
         inputs:
