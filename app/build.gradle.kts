@@ -99,6 +99,6 @@ dependencies {
 
 // Firebase App Distribution Configuration
 firebaseAppDistribution {
-    serviceCredentialsFile = "firebase-service-account.json"
+    serviceCredentialsFile = "./firebase-service-account.json"
     groups = "testers-group" // Replace with your tester group(s)
 }
