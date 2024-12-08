@@ -18,6 +18,12 @@ jobs:
 
     steps:
 
+      # Step: Check ANDROID_HOME
+      - script: |
+          echo "ANDROID_HOME: $ANDROID_HOME"
+          ls $ANDROID_HOME
+        displayName: Check ANDROID_HOME Environment Variable
+
       # Step 1: Explicit checkout configuration
       - task: Checkout@1
         inputs:
